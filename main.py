@@ -9,12 +9,18 @@ from classifier import classify_email_with_llm
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    format='[%(asctime)s] p%(process)s {%(filename)s:%(lineno)d} %(levelname)s - %(message)s',
     handlers=[
         logging.FileHandler("classification.log"),
         logging.StreamHandler()
     ]
 )
+
+# Get the logger for 'httpx'
+httpx_logger = logging.getLogger("httpx")
+
+# Set the logging level to WARNING to ignore INFO and DEBUG logs
+httpx_logger.setLevel(logging.WARNING)
 
 def process_and_classify_emails():
     """Main job function to fetch and classify emails."""

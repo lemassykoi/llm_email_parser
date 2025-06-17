@@ -1,0 +1,6 @@
+exchangelib
+openai
+ollama
+python-dotenv
+schedule
+pandas

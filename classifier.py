@@ -4,13 +4,14 @@ from dotenv import load_dotenv
 # Load environment variables from .env file as early as possible
 load_dotenv()
 
+import json
 from ollama import Client, ChatResponse
 
 USERNAME = os.getenv('MAIL_USER_NAME', '')
 LLM_MODEL_NAME = os.getenv('LLM_MODEL_NAME', 'llama3.2:latest')
 LLM_BASE_URL = os.getenv('LLM_BASE_URL', 'http://127.0.0.1:11434')
 
-def classify_email_with_openai(email_content):  ## OPENAI method
+def classify_email_with_openai(email_content):
     # Define possible labels/categories for classification
     categories = [
         'Advertisement / Commercial / Information / Newsletter',
@@ -53,7 +54,7 @@ def classify_email_with_openai(email_content):  ## OPENAI method
         print(f"Error during classification: {str(e)}")
         return None
 
-def classify_email_with_llm(email_content):  ## OLLAMA method
+def classify_email_with_llm(email_content):
     # Define possible labels/categories for classification
     categories = [
         'Advertisement / Commercial / Information / Newsletter',
@@ -67,7 +68,12 @@ def classify_email_with_llm(email_content):  ## OLLAMA method
     # Construct the prompt for LLM classification
     prompt = (
         "Classify this email into one of these categories (pick one): "
-        f"{', '.join(categories)}.\n\n"
+        f"{', '.join(categories)}. "
+        "Provide the response as a JSON object with the following keys: "
+        "'category' (string, one of the predefined categories. Carefully choose a single one.), "
+        "'confidence_score' (float, a score from 0.0 to 1.0 indicating confidence), "
+        "and 'reasoning' (string, a brief explanation for the classification). "
+        "Ensure the output is ONLY the JSON object.\n\n"
         f"Email Content:\n{email_content}"
     )
 
@@ -75,21 +81,24 @@ def classify_email_with_llm(email_content):  ## OLLAMA method
         response: ChatResponse = client.chat(
             model=LLM_MODEL_NAME,
             messages=[
-                {"role": "system", "content": f"You are a helpful assistant that classifies emails for {USERNAME}."},
+                {"role": "system", "content": f"You are a helpful assistant that classifies emails for {USERNAME}. Your output must be a JSON object."},
                 {"role": "user", "content": prompt}
             ],
             format="json",
         )
 
-        print(response['message']['content'])
-
-        # Extract the predicted label from the response
+        # Extract and parse the JSON content from the response
         if response.message.content:
-            predicted_label = response.message.content.strip()
-            return predicted_label
+            json_output = json.loads(response.message.content.strip())
+            print(json_output) # For debugging/logging
+            return json_output
         else:
-            raise ValueError("No choice found in API response")
+            raise ValueError("No content found in API response")
 
+    except json.JSONDecodeError as e:
+        print(f"Error decoding JSON from LLM response: {e}")
+        print(f"Raw LLM response content: {response.message.content}")
+        return None
     except Exception as e:
         print(f"Error during classification: {str(e)}")
         return None

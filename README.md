@@ -42,6 +42,7 @@ LLM_MODEL_NAME=llama3.2:latest
 LLM_BASE_URL=http://127.0.0.1:11434
 # Optional: For OpenAI instead of Ollama
 # OPENAI_API_KEY=your_openai_api_key
+# OPENAI_BASE_URL=http://127.0.0.1:11434/v1
 ```
 
 4. Encrypt your Exchange password:
